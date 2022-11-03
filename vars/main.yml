@@ -1,5 +1,0 @@
----
-proxmox_iommu_cmdline: intel_iommu=on iommu=pt # for Intel CPU
-# proxmox_iommu_cmdline: amd_iommu=on iommu=pt # for AMD CPU
-
-proxmox_iommu_zfs_boot: true

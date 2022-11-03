@@ -1,3 +1,61 @@
 ---
-- name: Include the appropriate tasks based on boot type
-  ansible.builtin.import_tasks: "{{ 'systemd' if proxmox_iommu_zfs_boot else 'grub' }}.yml"
+- name: Dynamically set cmdline string based on CPU type
+  when: proxmox_iommu_cmdline_override is not defined
+  block:
+    - name: Check CPU Type
+      ansible.builtin.shell: cat /proc/cpuinfo | grep -q "GenuineIntel"
+      changed_when: false
+      failed_when: false
+      register: __is_intel_cpu
+
+    - name: Set cmdline string
+      ansible.builtin.set_fact:
+        __cmdline: "{{ 'intel' if __is_intel_cpu.rc == 0 else 'amd' }}_iommu=on iommu=pt"
+
+- name: Automatically detect system boot type
+  when: proxmox_iommu_boot_type_override is not defined
+  block:
+    - name: Check Boot Type
+      ansible.builtin.stat:
+        path: /etc/kernel/cmdline
+      register: __is_systemd_boot
+
+    - name: Set cmdline string
+      ansible.builtin.set_fact:
+        __boot: "{{ 'systemd' if __is_systemd_boot.stat.exists else 'grub' }}"
+
+- name: Set GRUB cmdline
+  when: __boot | default(proxmox_iommu_boot_type_override) == "grub"
+  block:
+    - name: Read current cmdline
+      changed_when: false
+      failed_when: false
+      register: __cmdline
+      ansible.builtin.shell:
+        cmd: grep GRUB_CMDLINE_LINUX_DEFAULT /etc/default/grub
+
+    - name: Append new cmdline
+      when: "proxmox_iommu_cmdline not in __cmdline.stdout"
+      notify: Update GRUB
+      ansible.builtin.lineinfile:
+        dest: /etc/default/grub
+        regexp: 'GRUB_CMDLINE_LINUX_DEFAULT="(.*)"'
+        line: 'GRUB_CMDLINE_LINUX_DEFAULT="\1 {{ proxmox_iommu_cmdline }}"'
+        backrefs: true
+
+- name: Set Kernel cmdline
+  when: __boot | default(proxmox_iommu_boot_type_override) == "systemd"
+  block:
+    - name: Read current cmdline
+      changed_when: false
+      failed_when: false
+      register: __cmdline
+      ansible.builtin.command:
+        cmd: cat /etc/kernel/cmdline && rm /etc/kernel/cmdline
+
+    - name: Write new cmdline
+      ansible.builtin.lineinfile:
+        path: /etc/kernel/cmdline
+        line: "{{ __cmdline.stdout }} {{ proxmox_iommu_cmdline }}"
+        create: true
+      notify: EFI Refresh
