@@ -1,0 +1,8 @@
+---
+- name: Update GRUB
+  ansible.builtin.shell:
+    cmd: update-grub
+
+- name: EFI Refresh
+  ansible.builtin.shell:
+    cmd: proxmox-boot-tool refresh
