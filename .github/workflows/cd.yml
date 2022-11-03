@@ -1,5 +1,5 @@
 ---
-- name: Publish role to Galaxy
+name: Publish role to Galaxy
 
 on:
   workflow_dispatch:
