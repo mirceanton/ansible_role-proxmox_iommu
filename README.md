@@ -34,6 +34,9 @@ Example Playbook
     - role: mirceanton.proxmox_iommu
 ```
 
+LICENSE
+-------
+
 MIT
 
 Author Information
