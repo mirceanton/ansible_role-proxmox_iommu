@@ -50,13 +50,12 @@
       changed_when: false
       failed_when: false
       register: __cmdline_old
-      ansible.builtin.command:
-        cmd: cat /etc/kernel/cmdline && rm /etc/kernel/cmdline
+      ansible.builtin.shell:
+        cmd: cat /etc/kernel/cmdline
 
     - name: Write new cmdline
       when: __cmdline not in __cmdline_old.stdout
-      ansible.builtin.lineinfile:
-        path: /etc/kernel/cmdline
-        line: "{{ __cmdline_old.stdout }} {{ __cmdline }}"
-        create: true
+      ansible.builtin.copy:
+        dest: /etc/kernel/cmdline
+        content: "{{ __cmdline_old.stdout }} {{ __cmdline }}\n"
       notify: EFI Refresh

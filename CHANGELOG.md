@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.0.2
+
+* Fixed the systemd kernel command line getting duplicated when ran multiple times.
+* Documented support for PVE 7.3 in meta.
+
 ## v1.0.1
 
 * The role now automatically detects the CPU type (`intel`/`amd`) of the system to generate the appropriate cmdline.
