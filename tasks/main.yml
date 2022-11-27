@@ -52,7 +52,7 @@
       register: __cmdline_old
       ansible.builtin.shell:
         cmd: cat /etc/kernel/cmdline
-    
+
     - name: Write new cmdline
       when: __cmdline not in __cmdline_old.stdout
       ansible.builtin.copy:
